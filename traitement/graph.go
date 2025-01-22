@@ -2,31 +2,60 @@ package traitement
 
 import (
 	"fmt"
+	"sort"
 )
 
-// Graph représente un graphe non orienté avec des communautés
 type Graph struct {
-	AdjList   map[string][]string // Liste d'adjacence
-	Communities map[string]int    // Mapping entre les nœuds et leurs communautés
+	AdjList     map[int][]int
+	Communities map[int]int
 }
 
-// NewGraph crée un nouveau graphe
+// NewGraph crée un graphe vide
 func NewGraph() *Graph {
 	return &Graph{
-		AdjList:   make(map[string][]string),
-		Communities: make(map[string]int),
+		AdjList:     make(map[int][]int),
+		Communities: make(map[int]int),
 	}
 }
 
-// AddEdge ajoute une arête non orientée au graphe
-func (g *Graph) AddEdge(node1, node2 string) {
-	g.AdjList[node1] = append(g.AdjList[node1], node2)
-	g.AdjList[node2] = append(g.AdjList[node2], node1)
+// AddEdge ajoute une arête au graphe sans doublon
+func (g *Graph) AddEdge(u, v int) {
+	// Vérifier si l'arête existe déjà
+	if contains(g.AdjList[u], v) || u == v {
+		return
+	}
+	g.AdjList[u] = append(g.AdjList[u], v)
+	g.AdjList[v] = append(g.AdjList[v], u)
 }
 
-// Print affiche la liste d'adjacence du graphe
-func (g *Graph) Print() {
+// contains vérifie si une slice contient une valeur
+func contains(slice []int, value int) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+// DisplayCommunities affiche les communautés sous forme de groupes de nœuds
+func (g *Graph) DisplayCommunities() {
+	communityGroups := make(map[int][]int)
+	for node, community := range g.Communities {
+		communityGroups[community] = append(communityGroups[community], node)
+	}
+
+	// Tri des communautés et des nœuds
+	for community, nodes := range communityGroups {
+		sort.Ints(nodes)
+		fmt.Printf("Community %d: %v\n", community, nodes)
+	}
+}
+
+// PrintGraph affiche le graphe sous forme de listes d'adjacence
+func (g *Graph) PrintGraph() {
+	fmt.Println("Graphe (listes d'adjacence) :")
 	for node, neighbors := range g.AdjList {
-		fmt.Printf("%s: %v\n", node, neighbors)
+		fmt.Printf("%d: %v\n", node, neighbors)
 	}
 }
