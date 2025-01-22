@@ -16,14 +16,36 @@ func main() {
 	}
 	defer conn.Close()
 
-	// 创建一个扫描器来读取用户输入
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Enter numbers separated by commas (e.g., 2,3,9,7,1):")
+	// 指定需要读取的文件路径
+	filePath := "path/to/your/file.txt" // 替换为你的实际文件路径
 
-	// 读取用户输入
-	input, _ := reader.ReadString('\n')
+	// 打开文件
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
 
-	// 发送输入到服务端
+	// 创建一个扫描器读取文件内容
+	scanner := bufio.NewScanner(file)
+	var input string
+
+	for scanner.Scan() {
+		// 拼接文件的每一行内容，并用换行符分隔
+		input += scanner.Text() + "\n"
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	// 输出读取到的文件内容（可用于调试）
+	fmt.Println("Read from file:")
+	fmt.Println(input)
+
+	// 发送文件内容到服务端
 	_, err = conn.Write([]byte(input))
 	if err != nil {
 		fmt.Println("Error sending data to server:", err)
