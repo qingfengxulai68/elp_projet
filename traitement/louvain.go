@@ -1,10 +1,10 @@
 package traitement
 
-import "fmt"
+import (
+	"sort"
+)
 
-// Modularity calcule la modularité d'une partition de graphes
-
-
+// Modularity calcule la modularité
 func (g *Graph) Modularity() float64 {
 	m := float64(0)
 	for _, neighbors := range g.AdjList {
@@ -12,42 +12,63 @@ func (g *Graph) Modularity() float64 {
 	}
 	m /= 2
 
-	Q := 0.0
+	var Q float64
 	for node, neighbors := range g.AdjList {
 		community := g.Communities[node]
 		ki := float64(len(neighbors))
 		for _, neighbor := range neighbors {
 			kj := float64(len(g.AdjList[neighbor]))
 			if g.Communities[neighbor] == community {
-				Q += 1.0 - (ki * kj) / (2.0 * m)
+				Q += 1.0 - (ki*kj)/(2.0*m)
 			}
 		}
 	}
-	res := (Q / (2 * m))
-	// fmt.Printf("modularity : %f" , res )
-	return res
+	return Q / (2 * m)
 }
 
-// Louvain optimise la modularité et fusionne les communautés
-func (g *Graph) Louvain() {
-	// Initialiser les communautés (chaque nœud dans sa propre communauté)
-	i := 0
-	for node := range g.AdjList {
-		g.Communities[node] = i
-		fmt.Printf("Node %s : communauté %d \n", node, i)
-		i += 1
+// MergeCommunities fusionne les communautés en un nouveau graphe réduit
+func (g *Graph) MergeCommunities() {
+	newGraph := NewGraph()
+	newCommunities := make(map[int]int)
+	communityMap := make(map[int]int)
+
+	// Fusionner les arêtes entre les communautés
+	for node, community := range g.Communities {
+		for _, neighbor := range g.AdjList[node] {
+			// Ne pas fusionner les arêtes dans la même communauté
+			if g.Communities[neighbor] != community {
+				newGraph.AddEdge(community, g.Communities[neighbor])
+			}
+		}
+		if _, exists := communityMap[community]; !exists {
+			communityMap[community] = len(communityMap) + 1
+		}
+		newCommunities[node] = communityMap[community]
 	}
 
-	// Répéter l'optimisation
-	improvement := true
-	for improvement {
-		improvement = false
-		// Optimiser la modularité localement
-		for node := range g.AdjList {
-			bestCommunity := g.Communities[node]
+	// Remplacer l'ancien graphe par le nouveau graphe réduit
+	*g = *newGraph
+	g.Communities = newCommunities
+}
+
+// Louvain exécute l'algorithme Louvain
+func (g *Graph) Louvain(maxIterations int) {
+	nodes := make([]int, 0, len(g.AdjList))
+	for node := range g.AdjList {
+		nodes = append(nodes, node)
+		g.Communities[node] = node
+	}
+	sort.Ints(nodes)
+
+	for iter := 0; iter < maxIterations; iter++ {
+		improvement := false
+
+		// Optimisation locale de la modularité
+		for _, node := range nodes {
+			currentCommunity := g.Communities[node]
+			bestCommunity := currentCommunity
 			bestModularity := g.Modularity()
 
-			// Tester chaque communauté voisine
 			for _, neighbor := range g.AdjList[node] {
 				g.Communities[node] = g.Communities[neighbor]
 				newModularity := g.Modularity()
@@ -55,39 +76,19 @@ func (g *Graph) Louvain() {
 					bestModularity = newModularity
 					bestCommunity = g.Communities[neighbor]
 					improvement = true
-					fmt.Printf("Node %s : nouvelle communauté %d \n", node, i)
 				}
 			}
 
-			// Assigner la meilleure communauté trouvée
 			g.Communities[node] = bestCommunity
-			fmt.Printf("Node %s : finale communauté %d \n", node, i)
 		}
 
-		// Fusionner les communautés
-		if improvement {
-			g.MergeCommunities()
+		// Si aucune amélioration n'a été faite, terminer l'algorithme
+		if !improvement {
+			break
 		}
+
+		// Fusionner les communautés pour créer un nouveau graphe réduit
+		g.MergeCommunities()
 	}
-}
-
-// Fusionner les communautés en un nouveau graphe réduit
-func (g *Graph) MergeCommunities() {
-	// Créer un nouveau graphe pour les communautés fusionnées
-	newGraph := NewGraph()
-
-	// Parcourir chaque nœud et fusionner les communautés
-	for node, community := range g.Communities {
-		// Créer des arêtes entre les nœuds appartenant à la même communauté
-		for _, neighbor := range g.AdjList[node] {
-			// Si l'autre nœud est dans la même communauté, ajouter une arête
-			if g.Communities[neighbor] == community {
-				// Ajouter une arête entre les nœuds dans la même communauté
-				newGraph.AddEdge(node, neighbor)
-			}
-		}
-	}
-	// Remplacer l'ancien graphe par le nouveau graphe fusionné
-	*g = *newGraph
 }
 
