@@ -47,6 +47,7 @@ import (
 // )
 
 func main() {
+
 	// Créer un nouveau graphe
 	graph := traitement.NewGraph()
 
