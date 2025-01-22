@@ -47,7 +47,8 @@ func LoadGraphFromFile(filePath string) (*Graph, error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		nodes := strings.Fields(line) // 按空格分割每行数据
+		// 修改这里：使用制表符 `\t` 分割行
+		nodes := strings.Split(line, "\t")
 		if len(nodes) == 2 {
 			graph.AddEdge(nodes[0], nodes[1]) // 添加边
 		}
