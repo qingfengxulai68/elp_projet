@@ -1,53 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"elp_projet/traitement"
 	"fmt"
 	"os"
-	"bufio"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
-	"elp_projet/traitement"
 )
 
-// func main() {
-// 	// Ouvrir le fichier
-// 	file, err := os.Open("amazon_ungraph.txt")
-// 	if err != nil {
-// 		fmt.Println("Erreur lors de l'ouverture du fichier :", err)
-// 		return
-// 	}
-// 	defer file.Close()
-
-// 	// Initialiser le graphe
-// 	graph := traitement.Graph{AdjList: make(map[string][]string)}
-
-// 	// Lire le fichier ligne par ligne
-// 	scanner := bufio.NewScanner(file)
-// 	for scanner.Scan() {
-// 		line := scanner.Text()
-// 		nodes := strings.Fields(line) // Découper la ligne par espace
-// 		if len(nodes) == 2 {
-// 			graph.AddEdge(nodes[0], nodes[1]) // Ajouter l'arête
-// 		}
-// 	}
-// 	graph.Print()
-
-// 	// Vérifier les erreurs éventuelles
-// 	if err := scanner.Err(); err != nil {
-// 		fmt.Println("Erreur lors de la lecture :", err)
-// 	}
-// }
-
-// package main
-
-// import (
-// 	"fmt"
-// 	"louvain/traitement"
-// )
-
 func main() {
-
 	// Créer un nouveau graphe
 	graph := traitement.NewGraph()
 
@@ -63,6 +26,11 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		// Ignorer les lignes vides ou les commentaires (lignes qui commencent par "#")
+		if strings.HasPrefix(line, "#") || line == "" {
+			continue
+		}
 		nodes := strings.Fields(line) // Découper la ligne par espace
 		if len(nodes) == 2 {
 			// Convertir les chaînes en entiers
@@ -86,7 +54,6 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Erreur lors de la lecture du fichier :", err)
 	}
-	
 
 	// graph := traitement.NewGraph()
 	// graph.AddEdge(1, 2)
@@ -95,16 +62,16 @@ func main() {
 	// graph.AddEdge(4, 5)
 	// graph.AddEdge(5, 6)
 	// graph.AddEdge(6, 4)
-	
-	fmt.Println("Avant Louvain :")
-	graph.PrintGraph()
+
+	// fmt.Println("Avant Louvain :")
+	// graph.PrintGraph()
 
 	// Temps d'exécution
 	start := time.Now()
 
 	// Lancer l'algorithme de Louvain pour détecter les communautés
-	graph.Louvain(100)
-
+	graph.Louvain(10)
+	fmt.Println("Communautés trouvées :")
 	// Afficher les communautés
 	graph.DisplayCommunities()
 
