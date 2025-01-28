@@ -1,4 +1,4 @@
-package traitement
+package main
 
 import (
 	"sort"
@@ -91,4 +91,3 @@ func (g *Graph) Louvain(maxIterations int) {
 		g.MergeCommunities()
 	}
 }
-

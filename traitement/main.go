@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"elp_projet/traitement"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,7 +11,7 @@ import (
 
 func main() {
 	// Créer un nouveau graphe
-	graph := traitement.NewGraph()
+	graph := NewGraph()
 
 	// Ouvrir le fichier
 	file, err := os.Open("minigraph.txt")
