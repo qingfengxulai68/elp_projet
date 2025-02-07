@@ -44,19 +44,25 @@ func LoadGraphFromFile(filePath string) (*Graph, error) {
 	defer file.Close()
 
 	graph := &Graph{AdjList: make(map[string][]string)}
-	scanner := bufio.NewScanner(file)
+	reader := bufio.NewReader(file)
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		// 修改这里：使用制表符 `\t` 分割行
-		nodes := strings.Split(line, "\t")
-		if len(nodes) == 2 {
-			graph.AddEdge(nodes[0], nodes[1]) // 添加边
+	// 使用 bufio.Reader 逐行读取文件，处理长行
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err.Error() != "EOF" {
+				return nil, err
+			}
+			break
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
+		line = strings.TrimSpace(line)
+		if line != "" {
+			// 修改这里：使用制表符 `\t` 分割行
+			nodes := strings.Split(line, "\t")
+			if len(nodes) == 2 {
+				graph.AddEdge(nodes[0], nodes[1]) // 添加边
+			}
+		}
 	}
 
 	return graph, nil
