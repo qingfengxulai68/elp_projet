@@ -1,0 +1,70 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"gptandmain/traitement"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
+)
+
+// 处理客户端请求
+func handleConnection(conn net.Conn, g *traitement.Graph) {
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+
+	// 读取图数据
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "RUN" {
+			break // 当收到 RUN 指令时，开始计算 Louvain
+		}
+
+		nodes := strings.Fields(line)
+		if len(nodes) == 2 {
+			u, _ := strconv.Atoi(nodes[0])
+			v, _ := strconv.Atoi(nodes[1])
+			g.AddEdge(u, v)
+		}
+	}
+
+	// 并行运行 Louvain
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		g.Louvain(10)
+	}()
+	wg.Wait()
+
+	// 发送结果给客户端
+	for node, community := range g.Communities {
+		fmt.Fprintf(conn, "%d -> Community %d\n", node, community)
+	}
+	fmt.Fprintln(conn, "FIN") // 结束标志
+}
+
+func main() {
+	// 创建 TCP 监听
+	listener, err := net.Listen("tcp", ":8882")
+	if err != nil {
+		fmt.Println("Erreur de démarrage du serveur :", err)
+		return
+	}
+	defer listener.Close()
+
+	fmt.Println("Serveur en attente de connexions sur le port 8882...")
+
+	graph := traitement.NewGraph()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Erreur d'acceptation :", err)
+			continue
+		}
+		go handleConnection(conn, graph) // 启动协程处理连接
+	}
+}
